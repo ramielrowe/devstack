@@ -81,7 +81,7 @@ function create_vlan() {
 }
 
 function clean_server() {
-CLEAN_TEMPLATES=$1
+    CLEAN_TEMPLATES=$1
     # Shutdown all domU's that created previously
     clean_templates_arg=""
     if $CLEAN_TEMPLATES; then
@@ -187,7 +187,7 @@ function create_vm() {
 
     templateuuid=$(xe template-list name-label="$TNAME")
     if [ -z "$templateuuid" ]; then
-        vm_uuid = create_vm_and_template(GUEST_NAME, TNAME, SNAME_PREPARED)
+        vm_uuid = create_vm_and_template GUEST_NAME, TNAME, SNAME_PREPARED
     else
         #
         # Template already installed, create VM from template
