@@ -56,21 +56,26 @@ then
     rm -rf ./nova
 fi
 
-# get nova
-nova_zipball=$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")
-wget $nova_zipball -O nova-zipball --no-check-certificate
-unzip -o nova-zipball  -d ./nova
+function install_nova_plugins() {
+    # get nova
+    nova_repo_zipball=$(echo $NOVA_REPO | sed "s:\.git$::;s:$:/zipball/$NOVA_BRANCH:g")
+    nova_zipball=${NOVA_ZIPBALL:-$nova_repo_zipball}
+    wget $nova_zipball -O nova-zipball --no-check-certificate
+    unzip -o nova-zipball  -d ./nova
 
-# install xapi plugins
-XAPI_PLUGIN_DIR=/etc/xapi.d/plugins/
-if [ ! -d $XAPI_PLUGIN_DIR ]; then
-    # the following is needed when using xcp-xapi
-    XAPI_PLUGIN_DIR=/usr/lib/xcp/plugins/
-fi
-cp -pr ./nova/*/plugins/xenserver/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
-chmod a+x ${XAPI_PLUGIN_DIR}*
+    # install xapi plugins
+    XAPI_PLUGIN_DIR=/etc/xapi.d/plugins/
+    if [ ! -d $XAPI_PLUGIN_DIR ]; then
+        # the following is needed when using xcp-xapi
+        XAPI_PLUGIN_DIR=/usr/lib/xcp/plugins/
+    fi
+    cp -pr ./nova/*/plugins/xenserver/xenapi/etc/xapi.d/plugins/* $XAPI_PLUGIN_DIR
+    chmod a+x ${XAPI_PLUGIN_DIR}*
 
-mkdir -p /boot/guest
+    mkdir -p /boot/guest
+}
+
+install_nova_plugins
 
 
 #
@@ -168,49 +173,57 @@ fi
 # dom0 ip, XenAPI is assumed to be listening
 HOST_IP=${HOST_IP:-`ifconfig xenbr0 | grep "inet addr" | cut -d ":" -f2 | sed "s/ .*//"`}
 
-# Set up ip forwarding, but skip on xcp-xapi
-if [ -a /etc/sysconfig/network ]; then
-    if ! grep -q "FORWARD_IPV4=YES" /etc/sysconfig/network; then
-      # FIXME: This doesn't work on reboot!
-      echo "FORWARD_IPV4=YES" >> /etc/sysconfig/network
+function setup_ip_forwarding() {
+    # Set up ip forwarding, but skip on xcp-xapi
+    if [ -a /etc/sysconfig/network ]; then
+        if ! grep -q "FORWARD_IPV4=YES" /etc/sysconfig/network; then
+          # FIXME: This doesn't work on reboot!
+          echo "FORWARD_IPV4=YES" >> /etc/sysconfig/network
+        fi
     fi
-fi
-# Also, enable ip forwarding in rc.local, since the above trick isn't working
-if ! grep -q  "echo 1 >/proc/sys/net/ipv4/ip_forward" /etc/rc.local; then
-    echo "echo 1 >/proc/sys/net/ipv4/ip_forward" >> /etc/rc.local
-fi
-# Enable ip forwarding at runtime as well
-echo 1 > /proc/sys/net/ipv4/ip_forward
-
-
-#
-# Shutdown previous runs
-#
-
-DO_SHUTDOWN=${DO_SHUTDOWN:-1}
-CLEAN_TEMPLATES=${CLEAN_TEMPLATES:-false}
-if [ "$DO_SHUTDOWN" = "1" ]; then
-    # Shutdown all domU's that created previously
-    clean_templates_arg=""
-    if $CLEAN_TEMPLATES; then
-        clean_templates_arg="--remove-templates"
+    # Also, enable ip forwarding in rc.local, since the above trick isn't working
+    if ! grep -q  "echo 1 >/proc/sys/net/ipv4/ip_forward" /etc/rc.local; then
+        echo "echo 1 >/proc/sys/net/ipv4/ip_forward" >> /etc/rc.local
     fi
-    ./scripts/uninstall-os-vpx.sh $clean_templates_arg
+    # Enable ip forwarding at runtime as well
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+}
 
-    # Destroy any instances that were launched
-    for uuid in `xe vm-list | grep -1 instance | grep uuid | sed "s/.*\: //g"`; do
-        echo "Shutting down nova instance $uuid"
-        xe vm-unpause uuid=$uuid || true
-        xe vm-shutdown uuid=$uuid || true
-        xe vm-destroy uuid=$uuid
-    done
+setup_ip_forwarding
 
-    # Destroy orphaned vdis
-    for uuid in `xe vdi-list | grep -1 Glance | grep uuid | sed "s/.*\: //g"`; do
-        xe vdi-destroy uuid=$uuid
-    done
-fi
+function clean_xenserver(){
 
+    #
+    # Shutdown previous runs
+    #
+
+    DO_SHUTDOWN=${DO_SHUTDOWN:-1}
+    CLEAN_TEMPLATES=${CLEAN_TEMPLATES:-false}
+    if [ "$DO_SHUTDOWN" = "1" ]; then
+        # Shutdown all domU's that created previously
+        clean_templates_arg=""
+        if $CLEAN_TEMPLATES; then
+            clean_templates_arg="--remove-templates"
+        fi
+        ./scripts/uninstall-os-vpx.sh $clean_templates_arg
+
+        # Destroy any instances that were launched
+        for uuid in `xe vm-list | grep -1 instance | grep uuid | sed "s/.*\: //g"`; do
+            echo "Shutting down nova instance $uuid"
+            xe vm-unpause uuid=$uuid || true
+            xe vm-shutdown uuid=$uuid || true
+            xe vm-destroy uuid=$uuid
+        done
+
+        # Destroy orphaned vdis
+        for uuid in `xe vdi-list | grep -1 Glance | grep uuid | sed "s/.*\: //g"`; do
+            xe vdi-destroy uuid=$uuid
+        done
+    fi
+
+}
+
+clean_xenserver
 
 #
 # Create Ubuntu VM template
