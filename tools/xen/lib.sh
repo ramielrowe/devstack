@@ -106,12 +106,12 @@ function clean_server() {
 function wait_for_VM_to_halt() {
     while true
     do
-        state=$(xe_min vm-list name-label="$GUEST_NAME" power-state=halted)
+        state=$(xe_min vm-list name-label="$1" power-state=halted)
         if [ -n "$state" ]
         then
             break
         else
-            echo "Waiting for "$GUEST_NAME" to finish installation..."
+            echo "Waiting for "$1" to finish installation..."
             sleep 20
         fi
     done
@@ -152,7 +152,7 @@ function create_vm_and_template(){
     $TOP_DIR/scripts/install-os-vpx.sh -t "$UBUNTU_INST_TEMPLATE_NAME" -v $VM_BR -m $MGT_BR -p $PUB_BR -l $GUEST_NAME -r $OSDOMU_MEM_MB -k "flat_network_bridge=${VM_BR}"
 
     # wait for install to finish
-    wait_for_VM_to_halt
+    wait_for_VM_to_halt $GUEST_NAME
 
     # set VM to restart after a reboot
     vm_uuid=$(xe_min vm-list name-label="$GUEST_NAME")
@@ -169,7 +169,7 @@ function create_vm_and_template(){
     xe vm-start vm="$GUEST_NAME"
 
     # Wait for prep script to finish and shutdown system
-    wait_for_VM_to_halt
+    wait_for_VM_to_halt $GUEST_NAME
 
     # Make template from VM
     snuuid=$(xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME_PREPARED")
@@ -187,12 +187,12 @@ function create_vm() {
 
     templateuuid=$(xe template-list name-label="$TNAME")
     if [ -z "$templateuuid" ]; then
-        vm_uuid = create_vm_and_template GUEST_NAME, TNAME, SNAME_PREPARED
+        vm_uuid=$(create_vm_and_template $GUEST_NAME $TNAME $SNAME_PREPARED)
     else
         #
         # Template already installed, create VM from template
         #
-        vm_uuid = $(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
+        vm_uuid=$(xe vm-install template="$TNAME" new-name-label="$GUEST_NAME")
     fi
 
     return vm_uuid;

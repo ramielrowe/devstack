@@ -113,7 +113,7 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 DO_SHUTDOWN=${DO_SHUTDOWN:-1}
 CLEAN_TEMPLATES=${CLEAN_TEMPLATES:-false}
 if [ "$DO_SHUTDOWN" = "1" ]; then
-    clean_server CLEAN_TEMPLATES 
+    clean_server $CLEAN_TEMPLATES 
 fi
 
 
@@ -127,7 +127,7 @@ TNAME="devstack_template"
 SNAME_PREPARED="template_prepared"
 SNAME_FIRST_BOOT="before_first_boot"
 
-create_vm GUEST_NAME, TNAME, SNAME_PREPARED
+create_vm $GUEST_NAME $TNAME $SNAME_PREPARED
 
 #
 # Inject DevStack inside VM disk
