@@ -98,7 +98,7 @@ TNAME="devstack_template"
 SNAME_PREPARED="template_prepared"
 SNAME_FIRST_BOOT="before_first_boot"
 
-create_vm $GUEST_NAME $TNAME $SNAME_PREPARED
+create_vm "$GUEST_NAME" "$TNAME" "$SNAME_PREPARED"
 
 #
 # Inject DevStack inside VM disk

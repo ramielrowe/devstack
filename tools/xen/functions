@@ -152,9 +152,9 @@ function wait_for_VM_to_halt() {
 
 function create_vm_and_template() {
 
-    GUEST_NAME=$1
-    TNAME=$2
-    SNAME_PREPARED=$3
+    local GUEST_NAME=$1
+    local TNAME=$2
+    local SNAME_PREPARED=$3
 
     #
     # Install Ubuntu over network
@@ -212,13 +212,13 @@ function create_vm_and_template() {
 
 function create_vm() {
 
-    GUEST_NAME=$1
-    TNAME=$2
-    SNAME_PREPARED=$3
+    local GUEST_NAME=$1
+    local TNAME=$2
+    local SNAME_PREPARED=$3
 
     templateuuid=$(xe template-list name-label="$TNAME")
     if [ -z "$templateuuid" ]; then
-        create_vm_and_template GUEST_NAME TNAME SNAME_PREPARED
+        create_vm_and_template "$GUEST_NAME" "$TNAME" "$SNAME_PREPARED"
     else
         #
         # Template already installed, create VM from template
