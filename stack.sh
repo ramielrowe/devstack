@@ -1504,6 +1504,7 @@ if is_service_enabled n-api; then
     # Rewrite the authtoken configration for our Keystone service.
     # This is a bit defensive to allow the sample file some varaince.
     sed -e "
+        /auth_host/s/^.*$/auth_host = $KEYSTONE_AUTH_HOST/;
         /^admin_token/i admin_tenant_name = $SERVICE_TENANT_NAME
         /admin_tenant_name/s/^.*$/admin_tenant_name = $SERVICE_TENANT_NAME/;
         /admin_user/s/^.*$/admin_user = nova/;
@@ -2057,6 +2058,19 @@ for I in "${EXTRA_OPTS[@]}"; do
     add_nova_opt ${I//--}
 done
 
+# Cells
+# -----
+
+if is_service_enabled n-cell; then
+    add_nova_opt "enable_cells=true"
+    add_nova_opt "cell_name=$CELL_NAME"
+    add_nova_opt "compute_api_class=nova.compute.cells_api.ComputeCellsAPI"
+    add_nova_opt "cell_instance_update_num_instances=100"
+    add_nova_opt "cell_instance_updated_at_threshold=86400"
+    add_nova_opt "cell_scheduler_filters=nova.cells.filters.target_cell.RAXTargetCellFilter"
+    add_nova_opt "scheduler_host_manager=nova.scheduler.rackspace_host_manager.RackspaceHostManager"
+    add_nova_opt "scheduler_default_filters=ComputeFilter,RamFilter,RackspaceFilter"
+fi
 
 # XenServer
 # ---------
@@ -2162,6 +2176,10 @@ if is_service_enabled n-api; then
     fi
 fi
 
+if is_service_enabled n-cell; then
+    screen_it n-cell "cd $NOVA_DIR && $NOVA_BIN_DIR/nova-cells"
+fi
+
 if is_service_enabled q-svc; then
     # Start the Quantum service
     screen_it q-svc "cd $QUANTUM_DIR && python $QUANTUM_DIR/bin/quantum-server --config-file $Q_CONF_FILE --config-file /$Q_PLUGIN_CONF_FILE"
@@ -2209,6 +2227,15 @@ elif is_service_enabled mysql && is_service_enabled nova; then
 
     # Create a second pool
     $NOVA_BIN_DIR/nova-manage floating create --ip_range=$TEST_FLOATING_RANGE --pool=$TEST_FLOATING_POOL
+fi
+
+if is_service_enabled mysql && is_service_enabled n-cell; then
+    if [[ "$CELL_NAME" =~ "region" ]]; then
+        $NOVA_BIN_DIR/nova-manage cell create cell0 child guest "172.16.100.58" "5672" my_super_secret "/" "0" "1"
+        $NOVA_BIN_DIR/nova-manage cell create cell1 child guest "172.16.100.59" "5672" my_super_secret "/" "0" "1"
+    elif [[ "$CELL_NAME" =~ "cell" ]]; then
+        $NOVA_BIN_DIR/nova-manage cell create region parent guest "172.16.100.57" "5672" my_super_secret "/" "0" "1"
+    fi 
 fi
 
 # Start up the quantum agents if enabled

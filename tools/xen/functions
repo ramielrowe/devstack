@@ -229,8 +229,8 @@ function create_vm() {
 }
 
 # Helper to launch containers
-function build_xva {
-    GUEST_NAME=$1 MGT_IP=$2 DO_SHUTDOWN=$3 TERMINATE=$TERMINATE STACKSH_PARAMS="$COMMON_VARS $4" ./build_xva.sh
+function build_xva() {
+    GUEST_NAME=$1 MGT_IP=$2 DO_SHUTDOWN=$3 TERMINATE=$TERMINATE STACKSH_PARAMS="$COMMON_VARS $4" ./build_xva.sh $1
 }
 
 function find_ip_by_name() {

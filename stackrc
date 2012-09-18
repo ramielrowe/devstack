@@ -15,7 +15,7 @@ DEST=/opt/stack
 # And to disable Cinder and use Nova Volumes instead:
 # disable_service c-api c-sch c-vol cinder
 # enable_service n-vol
-ENABLED_SERVICES=g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit
+ENABLED_SERVICES=${ENABLED_SERVICES:-g-api,g-reg,key,n-api,n-crt,n-obj,n-cpu,n-net,cinder,c-sch,c-api,c-vol,n-sch,n-novnc,n-xvnc,n-cauth,horizon,mysql,rabbit}
 
 # Set the default Nova APIs to enable
 NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
@@ -25,7 +25,7 @@ NOVA_ENABLED_APIS=ec2,osapi_compute,osapi_volume,metadata
 
 # Base GIT Repo URL
 # Another option is http://review.openstack.org/p
-GIT_BASE=https://github.com
+GIT_BASE=https://github.rackspace.com
 
 # metering service
 CEILOMETER_REPO=https://github.com/stackforge/ceilometer.git
@@ -36,69 +36,70 @@ CINDER_REPO=${GIT_BASE}/openstack/cinder
 CINDER_BRANCH=master
 
 # volume client
-CINDERCLIENT_REPO=${GIT_BASE}/openstack/python-cinderclient
+CINDERCLIENT_REPO=${GIT_BASE}/O3Eng/python-cinderclient
 CINDERCLIENT_BRANCH=master
 
 # compute service
-NOVA_REPO=${GIT_BASE}/openstack/nova.git
-NOVA_BRANCH=master
+#NOVA_REPO=${GIT_BASE}/O3Eng/nova.git
+NOVA_REPO=https://github.rackspace.com/O3Eng/nova
+NOVA_BRANCH=development
 
 # storage service
-SWIFT_REPO=${GIT_BASE}/openstack/swift.git
+SWIFT_REPO=https://www.github.com/openstack/swift.git
 SWIFT_BRANCH=master
-SWIFT3_REPO=https://github.com/fujita/swift3.git
+SWIFT3_REPO=httpss://github.com/fujita/swift3.git
 SWIFT3_BRANCH=master
 
 # python swift client library
-SWIFTCLIENT_REPO=${GIT_BASE}/openstack/python-swiftclient
-SWIFTCLIENT_BRANCH=master
+SWIFTCLIENT_REPO=${GIT_BASE}/O3Eng/python-swiftclient
+SWIFTCLIENT_BRANCH=development
 
 # image catalog service
-GLANCE_REPO=${GIT_BASE}/openstack/glance.git
-GLANCE_BRANCH=master
+GLANCE_REPO=${GIT_BASE}/O3Eng/glance.git
+GLANCE_BRANCH=development
 
 # python glance client library
-GLANCECLIENT_REPO=${GIT_BASE}/openstack/python-glanceclient
-GLANCECLIENT_BRANCH=master
+GLANCECLIENT_REPO=${GIT_BASE}/O3Eng/python-glanceclient
+GLANCECLIENT_BRANCH=development
 
 # unified auth system (manages accounts/tokens)
-KEYSTONE_REPO=${GIT_BASE}/openstack/keystone.git
-KEYSTONE_BRANCH=master
+KEYSTONE_REPO=${GIT_BASE}/O3Eng/keystone.git
+KEYSTONE_BRANCH=development
 
 # a websockets/html5 or flash powered VNC console for vm instances
 NOVNC_REPO=https://github.com/kanaka/noVNC.git
 NOVNC_BRANCH=master
 
 # django powered web control panel for openstack
-HORIZON_REPO=${GIT_BASE}/openstack/horizon.git
+HORIZON_REPO=https://www.github.com/openstack/horizon.git
 HORIZON_BRANCH=master
 
 # python client library to nova that horizon (and others) use
-NOVACLIENT_REPO=${GIT_BASE}/openstack/python-novaclient.git
-NOVACLIENT_BRANCH=master
+NOVACLIENT_REPO=${GIT_BASE}/O3Eng/python-novaclient.git
+NOVACLIENT_BRANCH=development
 
 # consolidated openstack python client
-OPENSTACKCLIENT_REPO=${GIT_BASE}/openstack/python-openstackclient.git
+OPENSTACKCLIENT_REPO=https://www.github.com/openstack/python-openstackclient.git
 OPENSTACKCLIENT_BRANCH=master
 
 # python keystone client library to nova that horizon uses
-KEYSTONECLIENT_REPO=${GIT_BASE}/openstack/python-keystoneclient
-KEYSTONECLIENT_BRANCH=master
+KEYSTONECLIENT_REPO=${GIT_BASE}/O3Eng/python-keystoneclient
+KEYSTONECLIENT_BRANCH=development
 
 # quantum service
-QUANTUM_REPO=${GIT_BASE}/openstack/quantum
-QUANTUM_BRANCH=master
+QUANTUM_REPO=${GIT_BASE}/O3Eng/quantum
+QUANTUM_BRANCH=development
 
 # quantum client
-QUANTUM_CLIENT_REPO=${GIT_BASE}/openstack/python-quantumclient
-QUANTUM_CLIENT_BRANCH=master
+QUANTUM_CLIENT_REPO=${GIT_BASE}/O3Eng/python-quantumclient
+QUANTUM_CLIENT_BRANCH=development
 
 # Tempest test suite
-TEMPEST_REPO=${GIT_BASE}/openstack/tempest.git
+TEMPEST_REPO=https://www.github.com/openstack/tempest.git
 TEMPEST_BRANCH=master
 
 # heat service
-HEAT_REPO=${GIT_BASE}/heat-api/heat.git
+HEAT_REPO=https://www.github.com/heat-api/heat.git
 HEAT_BRANCH=master
 
 # Nova hypervisor configuration.  We default to libvirt with **kvm** but will

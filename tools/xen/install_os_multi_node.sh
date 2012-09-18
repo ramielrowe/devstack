@@ -95,9 +95,11 @@ clean_xenserver
 
 HEAD_MGT_IP=${HEAD_MGT_IP:-172.16.100.57}
 COMPUTE_MGT_IP_BASE=${COMPUTE_MGT_IP:-172.16.100.}
-COMMON_VARS="$STACKSH_PARAMS MYSQL_HOST=$HEAD_MGT_IP RABBIT_HOST=$HEAD_MGT_IP GLANCE_HOSTPORT=$HEAD_MGT_IP:9292 FLOATING_RANGE=$FLOATING_RANGE"
+COMMON_VARS="$STACKSH_PARAMS MYSQL_HOST=$HEAD_MGT_IP RABBIT_HOST=$HEAD_MGT_IP GLANCE_HOSTPORT=$HEAD_MGT_IP:9292"
 
-GUEST_NAME=${GUEST_NAME:-"DevStackHeadNode"}
+HEAD_NODE_NAME=${GUEST_NAME:-"DevStackHeadNode"}
+
+GUEST_NAME=$HEAD_NODE_NAME
 TNAME="devstack_template"
 SNAME_PREPARED="template_prepared"
 SNAME_FIRST_BOOT="before_first_boot"
@@ -106,30 +108,38 @@ create_vm "$GUEST_NAME" "$TNAME" "$SNAME_PREPARED"
 
 NUM_COMPUTES=${NUM_COMPUTES:-2}
 
-for i in {1..NUM_COMPUTES} do
+for ((i=0; i<$NUM_COMPUTES;i++))
+do
     create_vm "DevStackCompute$i" "$TNAME" "$SNAME_PREPARED"
 done
+
+GUEST_NAME=$HEAD_NODE_NAME
 
 #
 # Inject DevStack inside VM disk
 #
-build_xva "$GUEST_NAME" $HEAD_MGT_IP 1 "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,horizon,mysql,rabbit"
+build_xva "$GUEST_NAME" $HEAD_MGT_IP 1 "CELL_NAME=region ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,horizon,mysql,rabbit,n-cell"
 
-for i in {1..NUM_COMPUTES} do
-    last_octet=57+$i;
-    build_xva COMPUTENODE "$COMPUTE_MGT_IP_BASE.$last_octet" 0 "ENABLED_SERVICES=n-cpu,n-net,n-api"
-done
+
+GUEST_NAME=$HEAD_NODE_NAME
 
 # create a snapshot before the first boot
 # to allow a quick re-run with the same settings
 xe vm-snapshot vm="$GUEST_NAME" new-name-label="$SNAME_FIRST_BOOT"
 
-
 #
-# Run DevStack VM
+# Run DevStack VMs
 #
 xe vm-start vm="$GUEST_NAME"
 
+if [ $START_COMPUTES == "True" ]; then
+
+    for ((i=0; i<$NUM_COMPUTES;i++))
+    do
+        xe vm-start vm="DevStackCompute$i"
+    done
+
+fi
 
 #
 # Find IP and optionally wait for stack.sh to complete
@@ -149,9 +159,13 @@ else
     fi
 fi
 
-# Launch the head node - headnode uses a non-ip domain name,
-# because rabbit won't launch with an ip addr hostname :(
-build_xva HEADNODE $HEAD_PUB_IP $HEAD_MGT_IP 1 "ENABLED_SERVICES=g-api,g-reg,key,n-api,n-sch,n-vnc,horizon,mysql,rabbit"
+
+for ((i=0; i<$NUM_COMPUTES;i++))
+do
+    last_octet=$((58+$i));
+    COMMON_VARS="$STACKSH_PARAMS MYSQL_HOST=$COMPUTE_MGT_IP_BASE$last_octet RABBIT_HOST=$COMPUTE_MGT_IP_BASE$last_octet GLANCE_HOSTPORT=$DOMU_IP:9292"
+    build_xva "DevStackCompute$i" "$COMPUTE_MGT_IP_BASE$last_octet" 0 "CELL_NAME=cell$i ENABLED_SERVICES=n-cpu,n-sch,n-net,n-api,mysql,rabbit,n-cell"
+done
 
 # If we have copied our ssh credentials, use ssh to monitor while the installation runs
 WAIT_TILL_LAUNCH=${WAIT_TILL_LAUNCH:-1}
